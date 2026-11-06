@@ -31,7 +31,9 @@ do {
     try BuildLittleCms().buildALL()
     try BuildPlacebo().buildALL()
     try BuildDav1d().buildALL()
-    try BuildFFMPEG().buildALL()
+    // The FFmpeg 0.40.0-everything already ships, unpacked rather than rebuilt: Libmpv is a static archive, so it
+    // compiles against exactly these headers and links against exactly these binaries in the app.
+    try BuildFFmpegRelease().buildALL()
 
     // mpv
     try BuildUchardet().buildALL()
@@ -100,7 +102,7 @@ enum Library: String, CaseIterable {
         case .libmpv:
             return "https://github.com/mpv-player/mpv"
         case .FFmpeg:
-            return "https://github.com/FFmpeg/FFmpeg"
+            return "https://github.com/edde746/MPVKit/releases/download/0.40.0-everything/FFmpeg-all.zip"
         case .openssl:
             return
                 "https://github.com/mpvkit/openssl-build/releases/download/\(self.version)/openssl-all.zip"
@@ -501,7 +503,10 @@ private class BuildMPV: BaseBuild {
             array.append("-Dvideotoolbox-pl=enabled")
             array.append("-Dswift-build=disabled")
             array.append("-Daudiounit=enabled")
-            array.append("-Davfoundation=disabled")
+            // AVFoundation's AVSampleBufferAudioRenderer output, for the Apple TVs where the AudioUnit output
+            // opens but plays nothing (tvOS 26.4+ Continuous Audio Connection). The CoreAudio HAL is macOS only.
+            array.append("-Davfoundation=enabled")
+            array.append("-Dcoreaudio=disabled")
             array.append("-Dlua=disabled")
             if platform == .maccatalyst {
                 array.append("-Dcocoa=disabled")
@@ -515,6 +520,15 @@ private class BuildMPV: BaseBuild {
         return array
     }
 
+}
+
+private class BuildFFmpegRelease: ZipBaseBuild {
+    init() {
+        super.init(library: .FFmpeg)
+    }
+
+    // Package.swift keeps pointing at 0.40.0-everything's FFmpeg xcframeworks, so there is nothing to write for it.
+    override func afterBuild() throws {}
 }
 
 private class BuildFFMPEG: BaseBuild {
