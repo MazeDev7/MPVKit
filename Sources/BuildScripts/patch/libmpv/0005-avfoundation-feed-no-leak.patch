@@ -1,0 +1,27 @@
+diff --git a/audio/out/ao_avfoundation.m b/audio/out/ao_avfoundation.m
+--- a/audio/out/ao_avfoundation.m
++++ b/audio/out/ao_avfoundation.m
+@@ -69,6 +69,12 @@ static void feed(struct ao *ao)
+     int request_sample_count = samplerate / 10;
+     int buffer_size = request_sample_count * sstride;
+     void *data[] = {CFAllocatorAllocate(NULL, buffer_size, 0)};
++    // The copy below would write through a null pointer: an Apple TV crashed there (2026-11-08), most likely once the
++    // leak fixed below had used up the allocator. Give the renderer nothing this time instead.
++    if (!data[0]) {
++        MP_ERR(ao, "failed to allocate the audio buffer\n");
++        return;
++    }
+ 
+     int64_t cur_time_av = CMTimeGetNanoseconds([p->synchronizer currentTime]);
+     int64_t cur_time_mp = mp_time_ns();
+@@ -83,7 +89,9 @@ static void feed(struct ao *ao)
+         ao_stop_streaming(ao);
+     }
+     if (real_sample_count == 0) {
+-        return;
++        // Upstream mpv 59d5f774a: free the buffer. Returning here leaked it (38 KB for stereo) every time the renderer
++        // asked while mpv had no audio ready, as through an underrun.
++        goto finish;
+     }
+ 
+     if ((err = CMBlockBufferCreateWithMemoryBlock(

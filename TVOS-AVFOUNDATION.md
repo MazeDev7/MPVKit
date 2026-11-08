@@ -11,6 +11,13 @@ avfoundation output build for iOS and tvOS is upstream's
 `Sources/BuildScripts/patch/libmpv/0004-enable-avfoundation-ao-tvos.patch`. It applies cleanly to v0.40.0. An app
 picks the output with `ao=avfoundation,audiounit`.
 
+**The audio buffer leak (release `0.40.0-tvos-avfoundation-2`, 2026-11-08):** mpv 0.40.0's avfoundation output
+allocates a buffer each time the renderer asks for samples, and when mpv has none ready (an underrun) it returned without
+freeing it. Upstream fixed that after 0.40.0 (mpv 59d5f774a); `0005-avfoundation-feed-no-leak.patch` carries the fix and
+also gives the renderer nothing, instead of copying into a null pointer, if the allocation fails. An Apple TV crashed
+there during Live TV (EXC_BAD_ACCESS at 0x0 in `read_buffer` under the output's feed block), most likely once the leak had
+used up the allocator. The first release, `0.40.0-tvos-avfoundation`, has the leak.
+
 **What changed against 0.40.0-everything:**
 - `Package.swift`: only `Libmpv` points somewhere new, at this repo's release `0.40.0-tvos-avfoundation`. Every other
   binary is 0.40.0-everything's.

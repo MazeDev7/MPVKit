@@ -301,8 +301,8 @@ let package = Package(
 
         .binaryTarget(
             name: "Libmpv",
-            url: "https://github.com/MazeDev7/MPVKit/releases/download/0.40.0-tvos-avfoundation/Libmpv.xcframework.zip",
-            checksum: "7de9a276b8250dcff5eea7aadc9e01e8b703116294d882ea55aaf41adf2488af"
+            url: "https://github.com/MazeDev7/MPVKit/releases/download/0.40.0-tvos-avfoundation-2/Libmpv.xcframework.zip",
+            checksum: "e6bfdf29fc028728c9baa4a001388af5fc9f27e5df0b2cd43ca579e89d52dcaa"
         ),
         //AUTO_GENERATE_TARGETS_END//
     ]
